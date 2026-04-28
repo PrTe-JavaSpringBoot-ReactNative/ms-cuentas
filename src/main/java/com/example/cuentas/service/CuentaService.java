@@ -50,27 +50,27 @@ public class CuentaService {
         Cuenta cuenta = requestDTOToEntity(cuentaRequest);
         Cuenta cuentaGuardada = cuentaRepository.save(cuenta);
 
-        return entityToResponseDTO(cuentaGuardada);
+        return new entityToResponseDTO(cuentaGuardada);
     }
 
     @Transactional
     public CuentaResponseDTO actualizarCuenta(String numeroCuenta, CuentaRequestDTO cuentaRequest) {
         log.info("Actualizando cuenta con número: {}", numeroCuenta);
         
-        Cuenta cuenta = cuentaRepository.findByNumeroCuenta(cuentaRequest.getCuentaNumeroCuenta())
+        Cuenta cuenta = cuentaRepository.findByNumeroCuenta(cuentaRequest.getNumeroCuenta())
                 .orElseThrow(() -> {
-                    log.warn("Cuenta con numero {} no encontrado", cuentaRequest.getCuentaNumeroCuenta());
-                    return new CuentaNotFoundException(cuentaRequest.getCuentaNumeroCuenta());
+                    log.warn("Cuenta con numero {} no encontrado", cuentaRequest.getNumeroCuenta());
+                    return new CuentaNotFoundException(cuentaRequest.getNumeroCuenta());
                 });
 
         cuenta.setTipoCuenta(cuentaRequest.getTipoCuenta());
         cuenta.setSaldoInicial(cuentaRequest.getSaldoInicial());
         cuenta.setSaldoDisponible(cuentaRequest.getSaldoDisponible());
-        cuenta.setCliente(cliente);
+        cuenta.setCliente(cuentaRequest.getClienteId());
 
         Cuenta cuentaActualizada = cuentaRepository.save(cuenta);
 
-        return entityToResponseDTO(cuentaActualizada);
+        return new entityToResponseDTO(cuentaActualizada);
     }
 
     @Transactional
@@ -78,7 +78,7 @@ public class CuentaService {
         log.info("Eliminando cuenta con número: {}", numeroCuenta);
         if (!cuentaRepository.findByNumeroCuenta(numeroCuenta).isPresent()) {
             log.warn("Cuenta con número {} no encontrada para eliminación", numeroCuenta);
-            return new CuentaNotFoundException(cuentaRequest.getCuentaNumeroCuenta());
+            return new CuentaNotFoundException(numeroCuenta);
         }
 
         cuentaRepository.deleteByNumeroCuenta(numeroCuenta);

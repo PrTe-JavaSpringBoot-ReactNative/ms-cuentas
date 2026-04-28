@@ -30,9 +30,9 @@ public class CuentaController {
     //Leer una cuenta por numeroCuenta
     // GET /api/cuentas/{numCuenta}
     @GetMapping("/{numCuenta}")
-    public ResponseEntity<CuentaResponseDTO> obtenerPorId(@PathVariable String numCuenta) {
+    public ResponseEntity<CuentaResponseDTO> obtenerPorNumeroCuenta(@PathVariable String numCuenta) {
         CuentaResponseDTO cuenta = cuentaService.obtenerCuentaPorNumeroCuenta(numCuenta);
-        return ResponseEntity.ok(new CuentaResponseDTO());
+        return ResponseEntity.ok(cuenta);
     }
 
     // Crear una nueva cuenta
@@ -44,18 +44,18 @@ public class CuentaController {
     }
 
     // Actualizar una cuenta existente
-    // PUT /api/cuentas/{id}
-    @PutMapping("/{id}")
-    public ResponseEntity<CuentaResponseDTO> actualizarCuenta(@PathVariable Long id, @Valid @RequestBody CuentaRequestDTO cuentaRequest) {
-        CuentaResponseDTO cuentaActualizada = cuentaService.actualizarCuenta(id, cuentaRequest);
+    // PUT /api/cuentas/{numCuenta}
+    @PutMapping("/{numCuenta}")
+    public ResponseEntity<CuentaResponseDTO> actualizarCuenta(@PathVariable String numCuenta, @Valid @RequestBody CuentaRequestDTO cuentaRequest) {
+        CuentaResponseDTO cuentaActualizada = cuentaService.actualizarCuenta(numCuenta, cuentaRequest);
         return ResponseEntity.ok(cuentaActualizada);
     }
 
     // Eliminar una cuenta
-    // DELETE /api/cuentas/{id}
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarCuenta(@PathVariable Long id) {
-        cuentaService.eliminarCuenta(id);
+    // DELETE /api/cuentas/{numCuenta}
+    @DeleteMapping("/{numCuenta}")
+    public ResponseEntity<Void> eliminarCuenta(@PathVariable String numCuenta) {
+        cuentaService.eliminarCuenta(numCuenta);
         return ResponseEntity.noContent().build();
     }
 }

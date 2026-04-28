@@ -11,107 +11,75 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Configuración de RabbitMQ para ms-cuentas.
  *
- * Topología de mensajería (espejo de la vista desde ms-cuentas):
+ * Topología completa de mensajería:
  *
- *   ms-cuentas  ──(producer)──▶  Exchange: clientes.events
- *                                      │
- *                                      └──▶  Queue: clientes.solicitudes.validacion
- *                                                 │
- *                                           ms-clientes (consumer)
- *                                           valida si el clienteId existe
+ *  [SOLICITUD DE VALIDACIÓN]
+ *  ms-cuentas (producer) ──▶ Exchange: clientes.events
+ *                                  └──▶ Queue: clientes.solicitudes.validacion
+ *                                             └──▶ ms-clientes (consumer)
  *
- *   ms-cuentas  ◀─(consumer)──  Queue: clientes.eventos.cuentas
- *                                      │
- *                                 ms-clientes (producer)
- *                                 notifica cambios de estado de clientes
- *
- *   ms-cuentas  ──(producer)──▶  Exchange: cuentas.events
- *                                      │
- *                                      └──▶  Queue: cuentas.eventos  (uso futuro)
- *
- * Nota: ms-cuentas declara también las colas de clientes para garantizar
- * que existan en RabbitMQ independientemente del orden de arranque.
- * RabbitMQ es idempotente en la declaración de exchanges/queues.
+ *  [RESPUESTA DE VALIDACIÓN]
+ *  ms-clientes (producer) ──▶ Exchange: cuentas.events
+ *                                  └──▶ Queue: cuentas.validacion.respuesta
+ *                                             └──▶ ms-cuentas (consumer)
  */
 @Configuration
 public class RabbitMQConfig {
 
     // ── Exchanges ──────────────────────────────────────────────────────────
 
-    /** Exchange del microservicio de clientes (declarado también aquí por idempotencia) */
     public static final String CLIENTES_EXCHANGE = "clientes.events";
-
-    /** Exchange propio del microservicio de cuentas */
     public static final String CUENTAS_EXCHANGE = "cuentas.events";
 
     // ── Queues ─────────────────────────────────────────────────────────────
 
-    /** Cola que ms-cuentas CONSUME: eventos de cambios en clientes */
-    public static final String CLIENTES_EVENTOS_CUENTAS_QUEUE = "clientes.eventos.cuentas";
-
-    /** Cola donde ms-cuentas PUBLICA: solicitudes de validación de clienteId */
+    /** ms-cuentas PUBLICA aquí: solicitudes de validación hacia ms-clientes */
     public static final String CLIENTES_VALIDACION_QUEUE = "clientes.solicitudes.validacion";
 
-    /** Cola de eventos propios de cuentas (para uso futuro o extensiones) */
-    public static final String CUENTAS_EVENTOS_QUEUE = "cuentas.eventos";
+    /** ms-cuentas CONSUME aquí: respuestas de validación que envía ms-clientes */
+    public static final String CUENTAS_VALIDACION_RESPUESTA_QUEUE = "cuentas.validacion.respuesta";
+
+    /** Cola de eventos de clientes (cambios de estado) - para uso futuro */
+    public static final String CLIENTES_EVENTOS_CUENTAS_QUEUE = "clientes.eventos.cuentas";
 
     // ── Routing Keys ───────────────────────────────────────────────────────
 
-    public static final String CLIENTE_EVENTO_ROUTING_KEY = "cliente.evento.#";
     public static final String CLIENTE_VALIDACION_ROUTING_KEY = "cliente.validacion.solicitud";
-    public static final String CUENTA_EVENTO_ROUTING_KEY = "cuenta.evento.#";
+    public static final String CUENTA_VALIDACION_RESPUESTA_ROUTING_KEY = "cuenta.validacion.respuesta";
+    public static final String CLIENTE_EVENTO_ROUTING_KEY = "cliente.evento.#";
 
     // ── Beans: Exchanges ───────────────────────────────────────────────────
 
     @Bean
     public TopicExchange clientesExchange() {
-        return ExchangeBuilder
-                .topicExchange(CLIENTES_EXCHANGE)
-                .durable(true)
-                .build();
+        return ExchangeBuilder.topicExchange(CLIENTES_EXCHANGE).durable(true).build();
     }
 
     @Bean
     public TopicExchange cuentasExchange() {
-        return ExchangeBuilder
-                .topicExchange(CUENTAS_EXCHANGE)
-                .durable(true)
-                .build();
+        return ExchangeBuilder.topicExchange(CUENTAS_EXCHANGE).durable(true).build();
     }
 
     // ── Beans: Queues ──────────────────────────────────────────────────────
 
     @Bean
-    public Queue clientesEventosCuentasQueue() {
-        return QueueBuilder
-                .durable(CLIENTES_EVENTOS_CUENTAS_QUEUE)
-                .build();
-    }
-
-    @Bean
     public Queue clientesValidacionQueue() {
-        return QueueBuilder
-                .durable(CLIENTES_VALIDACION_QUEUE)
-                .build();
+        return QueueBuilder.durable(CLIENTES_VALIDACION_QUEUE).build();
     }
 
     @Bean
-    public Queue cuentasEventosQueue() {
-        return QueueBuilder
-                .durable(CUENTAS_EVENTOS_QUEUE)
-                .build();
+    public Queue cuentasValidacionRespuestaQueue() {
+        return QueueBuilder.durable(CUENTAS_VALIDACION_RESPUESTA_QUEUE).build();
+    }
+
+    @Bean
+    public Queue clientesEventosCuentasQueue() {
+        return QueueBuilder.durable(CLIENTES_EVENTOS_CUENTAS_QUEUE).build();
     }
 
     // ── Beans: Bindings ────────────────────────────────────────────────────
 
-    @Bean
-    public Binding bindingClientesEventosCuentas() {
-        return BindingBuilder
-                .bind(clientesEventosCuentasQueue())
-                .to(clientesExchange())
-                .with(CLIENTE_EVENTO_ROUTING_KEY);
-    }
-
+    /** ms-cuentas publica solicitudes de validación en este exchange/routing key */
     @Bean
     public Binding bindingClientesValidacion() {
         return BindingBuilder
@@ -120,15 +88,25 @@ public class RabbitMQConfig {
                 .with(CLIENTE_VALIDACION_ROUTING_KEY);
     }
 
+    /** ms-cuentas escucha las respuestas de validación en su propio exchange */
     @Bean
-    public Binding bindingCuentasEventos() {
+    public Binding bindingCuentasValidacionRespuesta() {
         return BindingBuilder
-                .bind(cuentasEventosQueue())
+                .bind(cuentasValidacionRespuestaQueue())
                 .to(cuentasExchange())
-                .with(CUENTA_EVENTO_ROUTING_KEY);
+                .with(CUENTA_VALIDACION_RESPUESTA_ROUTING_KEY);
     }
 
-    // ── Beans: Serialización ───────────────────────────────────────────────
+    /** ms-cuentas escucha eventos de cambio de estado de clientes */
+    @Bean
+    public Binding bindingClientesEventosCuentas() {
+        return BindingBuilder
+                .bind(clientesEventosCuentasQueue())
+                .to(clientesExchange())
+                .with(CLIENTE_EVENTO_ROUTING_KEY);
+    }
+
+    // ── Serialización ──────────────────────────────────────────────────────
 
     @Bean
     public MessageConverter jsonMessageConverter() {

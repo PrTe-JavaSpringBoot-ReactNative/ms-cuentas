@@ -31,6 +31,5 @@ public class Movimiento {
     private Double saldo;
 
     @Column(nullable = false)
-    @JoinColumn(name = "cuenta_id")
     private Long cuentaId;
 }
