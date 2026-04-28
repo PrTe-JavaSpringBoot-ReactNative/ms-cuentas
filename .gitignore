@@ -1,0 +1,13 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+.vscode/
+
+*.log
+logs/
+
+.DS_Store
+Thumbs.db
+
+.env
+.env.local
