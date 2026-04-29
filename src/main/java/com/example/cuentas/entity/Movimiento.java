@@ -1,10 +1,12 @@
 package com.example.cuentas.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;   
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "movimientos")
@@ -19,7 +21,7 @@ public class Movimiento {
     private Long movimientoId;
 
     @Column(nullable = false)
-    private Date fecha;
+    private LocalDateTime fecha;
 
     @Column(nullable = false, length = 255)
     private String tipoMovimiento;
@@ -29,6 +31,9 @@ public class Movimiento {
 
     @Column(nullable = false)
     private Double saldo;
+
+    @Column(nullable = false)
+    private String numeroCuenta;
 
     @Column(nullable = false)
     private Long cuentaId;

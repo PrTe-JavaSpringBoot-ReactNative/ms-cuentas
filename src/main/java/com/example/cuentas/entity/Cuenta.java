@@ -18,10 +18,10 @@ public class Cuenta {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long cuentaId;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, unique = true, length = 20)
     private String numeroCuenta;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 50)
     private String tipoCuenta;
 
     @Column(nullable = false)
@@ -29,6 +29,9 @@ public class Cuenta {
 
     @Column(nullable = false)
     private Double saldoDisponible;
+
+    @Column(nullable = false, length = 20)
+    private String estado;
 
     @Column(nullable = false)
     private Long clienteId;

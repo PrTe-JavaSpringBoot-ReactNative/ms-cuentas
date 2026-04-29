@@ -1,4 +1,4 @@
-package com.example.cuentas.dto;
+package com.example.clientes.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

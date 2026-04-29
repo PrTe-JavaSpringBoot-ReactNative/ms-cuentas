@@ -19,7 +19,6 @@ public class CuentaController {
 
     private final CuentaService cuentaService;
 
-    //Leer todas las cuentas
     // GET /api/cuentas
     @GetMapping
     public ResponseEntity<List<CuentaResponseDTO>> obtenerTodas() {
@@ -27,7 +26,6 @@ public class CuentaController {
         return ResponseEntity.ok(cuentas);
     }
 
-    //Leer una cuenta por numeroCuenta
     // GET /api/cuentas/{numCuenta}
     @GetMapping("/{numCuenta}")
     public ResponseEntity<CuentaResponseDTO> obtenerPorNumeroCuenta(@PathVariable String numCuenta) {
@@ -35,7 +33,6 @@ public class CuentaController {
         return ResponseEntity.ok(cuenta);
     }
 
-    // Crear una nueva cuenta
     // POST /api/cuentas
     @PostMapping
     public ResponseEntity<CuentaResponseDTO> crearCuenta(@Valid @RequestBody CuentaRequestDTO cuentaRequest) {
@@ -43,7 +40,6 @@ public class CuentaController {
         return new ResponseEntity<>(nuevaCuenta, HttpStatus.CREATED);
     }
 
-    // Actualizar una cuenta existente
     // PUT /api/cuentas/{numCuenta}
     @PutMapping("/{numCuenta}")
     public ResponseEntity<CuentaResponseDTO> actualizarCuenta(@PathVariable String numCuenta, @Valid @RequestBody CuentaRequestDTO cuentaRequest) {
@@ -51,7 +47,6 @@ public class CuentaController {
         return ResponseEntity.ok(cuentaActualizada);
     }
 
-    // Eliminar una cuenta
     // DELETE /api/cuentas/{numCuenta}
     @DeleteMapping("/{numCuenta}")
     public ResponseEntity<Void> eliminarCuenta(@PathVariable String numCuenta) {

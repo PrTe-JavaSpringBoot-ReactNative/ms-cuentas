@@ -192,3 +192,24 @@ No requiere Docker (usa H2 en memoria).
 | `RABBITMQ_USER` | `guest` | Usuario RabbitMQ |
 | `RABBITMQ_PASSWORD` | `guest` | Contraseña RabbitMQ |
 | `SERVER_PORT` | `8081` | Puerto HTTP |
+
+
+```
+Usuario                ms-cuentas              RabbitMQ            ms-clientes
+  │                        │                       │                     │
+  │── POST /cuentas ───────▶│                       │                     │
+  │                        │── publica mensaje ────▶│                     │
+  │                        │   { clienteId: 5,      │                     │
+  │                        │     cuentaId: 10,      │── entrega ─────────▶│
+  │                        │     accion: VALIDAR }  │                     │
+  │◀─ 201 CREATED ─────────│                        │                     │
+  │   (cuenta guardada)     │                        │   ms-clientes busca │
+  │                        │                        │   el clienteId y    │
+  │                        │◀─ respuesta ───────────│◀─ publica resultado │
+  │                        │   { clienteId: 5,      │                     │
+  │                        │     existe: false }    │                     │
+  │                        │                        │                     │
+  │                        │ (si no existe: marcar  │                     │
+  │                        │  cuenta como INVALIDA  │                     │
+  │                        │  o eliminarla)         │                     │
+  ```

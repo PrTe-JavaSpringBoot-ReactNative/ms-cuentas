@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface CuentaRepository extends JpaRepository<Cuenta, Long> {
 
     Optional<Cuenta> findByNumeroCuenta(String numeroCuenta);
+
+    void deleteByNumeroCuenta(String numeroCuenta);
 }

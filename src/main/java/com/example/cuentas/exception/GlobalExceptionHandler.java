@@ -9,20 +9,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
-/**
- * Manejador global de excepciones para ms-cuentas.
- *
- * Centraliza el tratamiento de errores y retorna respuestas JSON estandarizadas.
- *
- * Situaciones manejadas:
- *   - CuentaNotFoundException      → 404 Not Found
- *   - CuentaYaExisteException      → 409 Conflict
- *   - SaldoInsuficienteException   → 422 Unprocessable Entity ("Saldo no disponible")
- *   - MethodArgumentNotValidException → 400 Bad Request (validaciones de @Valid)
- *   - Exception genérica           → 500 Internal Server Error
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -48,13 +37,51 @@ public class GlobalExceptionHandler {
      * 422 - Saldo insuficiente.
      * Se lanza al intentar registrar un movimiento que deja saldo negativo.
      * El mensaje devuelto es exactamente el requerido por la especificación: "Saldo no disponible"
-     *
-     * NOTA: Descomentar cuando implementes SaldoInsuficienteException en el dominio.
      */
-    // @ExceptionHandler(SaldoInsuficienteException.class)
-    // public ResponseEntity<Map<String, Object>> handleSaldoInsuficiente(SaldoInsuficienteException ex) {
-    //     return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Saldo no disponible", ex.getMessage());
-    // }
+    @ExceptionHandler(SaldoInsuficienteException.class)
+    public ResponseEntity<Map<String, Object>> handleSaldoInsuficiente(SaldoInsuficienteException ex) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Saldo no disponible", ex.getMessage());
+    }
+
+    /**
+     * 400 - Error de validación de cliente.
+     * Se lanza cuando el cliente no existe o hay error en la comunicación con ms-clientes.
+     */
+    @ExceptionHandler(ClienteNoExisteException.class)
+    public ResponseEntity<Map<String, Object>> handleClienteNoExiste(ClienteNoExisteException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Cliente inválido", ex.getMessage());
+    }
+
+    /**
+     * 400/500 - Error de comunicación con ms-clientes.
+     * Se lanza cuando hay problemas de conectividad o el cliente solicitado no existe.
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("no existe") ?
+                HttpStatus.BAD_REQUEST : HttpStatus.INTERNAL_SERVER_ERROR;
+        return buildResponse(status, "Error", ex.getMessage() != null ? ex.getMessage() : "Error desconocido");
+    }
+
+    @ExceptionHandler(CompletionException.class)
+    public ResponseEntity<Map<String, Object>> handleCompletionException(CompletionException ex) {
+        Throwable cause = ex.getCause();
+
+        if (cause instanceof SaldoInsuficienteException) {
+            return handleSaldoInsuficiente((SaldoInsuficienteException) cause);
+        } else if (cause instanceof CuentaNotFoundException) {
+            return handleCuentaNotFound((CuentaNotFoundException) cause);
+        } else if (cause instanceof CuentaYaExisteException) {
+            return handleCuentaYaExiste((CuentaYaExisteException) cause);
+        } else if (cause instanceof ClienteNoExisteException) {
+            return handleClienteNoExiste((ClienteNoExisteException) cause);
+        } else if (cause instanceof RuntimeException) {
+            return handleRuntimeException((RuntimeException) cause);
+        }
+
+        return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error",
+                cause != null && cause.getMessage() != null ? cause.getMessage() : "Error desconocido");
+    }
 
     /**
      * 400 - Validación de campos fallida.
