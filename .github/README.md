@@ -4,7 +4,7 @@ Microservicio responsable del dominio **Cuenta** y **Movimiento** dentro de la a
 
 ---
 
-## 🎯 Responsabilidad de este microservicio
+## Responsabilidad de este microservicio
 
 Este servicio es el dueño exclusivo de los datos de cuentas y movimientos. Para operar necesita saber a qué cliente pertenece cada cuenta, pero **no accede directamente a la base de datos de ms-clientes**. La validación de clientes se realiza mediante mensajería asíncrona con RabbitMQ.
 
@@ -14,7 +14,7 @@ Este servicio es el dueño exclusivo de los datos de cuentas y movimientos. Para
 
 ---
 
-## 🛠️ Tecnologías
+## Tecnologías
 
 | Tecnología | Versión | Rol |
 |---|---|---|
@@ -29,7 +29,7 @@ Este servicio es el dueño exclusivo de los datos de cuentas y movimientos. Para
 
 ---
 
-## 📁 Estructura del proyecto
+## Estructura del proyecto
 
 ```
 ms-cuentas/
@@ -38,52 +38,31 @@ ms-cuentas/
 │   │   ├── java/com/example/cuentas/
 │   │   │   ├── MsCuentasApplication.java        # Entry point
 │   │   │   ├── controller/
-│   │   │   │   └── HealthController.java         # ✅ GET /api/health
-│   │   │   │   # TODO: CuentaController          → /api/cuentas
-│   │   │   │   # TODO: MovimientoController      → /api/movimientos
-│   │   │   │   # TODO: ReporteController         → /api/reportes
 │   │   │   ├── service/
-│   │   │   │   # TODO: CuentaService             → lógica de negocio
-│   │   │   │   # TODO: MovimientoService         → registro y validación de saldo
-│   │   │   │   # TODO: ReporteService            → estado de cuenta por fechas
 │   │   │   ├── repository/
-│   │   │   │   # TODO: CuentaRepository          → extends JpaRepository
-│   │   │   │   # TODO: MovimientoRepository      → extends JpaRepository
 │   │   │   ├── entity/
-│   │   │   │   # TODO: Cuenta.java               → @Entity
-│   │   │   │   # TODO: Movimiento.java           → @Entity, @ManyToOne Cuenta
 │   │   │   ├── dto/
-│   │   │   │   # TODO: CuentaRequestDTO / CuentaResponseDTO
-│   │   │   │   # TODO: MovimientoRequestDTO / MovimientoResponseDTO
-│   │   │   │   # TODO: EstadoCuentaDTO           → respuesta del /reportes
 │   │   │   ├── exception/
-│   │   │   │   └── GlobalExceptionHandler.java   # ✅ Manejador global
-│   │   │   │   # TODO: SaldoInsuficienteException
 │   │   │   ├── config/
-│   │   │   │   └── RabbitMQConfig.java           # ✅ Exchange, queues, bindings
 │   │   │   └── messaging/
-│   │   │       # TODO: ClienteEventoConsumer     → reacciona a cambios de cliente
-│   │   │       # TODO: ClienteValidacionPublisher → solicita validar clienteId
 │   │   └── resources/
-│   │       └── application.yml                   # ✅ Config PostgreSQL + RabbitMQ
+│   │       └── application.yml                   # Config PostgreSQL + RabbitMQ
 │   └── test/
 │       ├── java/com/example/cuentas/
 │       │   ├── controller/
-│       │   │   └── HealthControllerTest.java     # ✅ Tests del /health
 │       │   └── service/
-│       │       # TODO: MovimientoServiceTest     → validar lógica de saldo
 │       └── resources/
-│           └── application.yml                   # ✅ Config H2 para tests
+│           └── application.yml                   # Config H2 para tests
 ├── .github/
-│   └── README.md                                 # Este archivo
-├── Dockerfile                                    # ✅ Multi-stage build
-├── pom.xml                                       # ✅ Dependencias Maven
+│   └── README.md                                 
+├── Dockerfile                                    
+├── pom.xml                                       
 └── .gitignore
 ```
 
 ---
 
-## 🏗️ Decisiones de arquitectura
+## Decisiones de arquitectura
 
 ### Referencia lógica a Cliente (sin FK entre bases de datos)
 
@@ -115,29 +94,8 @@ El endpoint `/api/reportes?fecha=fechaInicio,fechaFin&clienteId=X` debe retornar
 
 ---
 
-## 📨 Mensajería asíncrona (RabbitMQ)
 
-```
-ms-cuentas (CONSUMER) ◀── Queue: clientes.eventos.cuentas
-                               Producer: ms-clientes
-                               Payload: { clienteId, nuevoEstado }
-                               Acción: si cliente desactivado → bloquear cuentas
-
-ms-cuentas (PRODUCER) ──▶ Exchange: clientes.events
-                                 │
-                                 └──▶ [cliente.validacion.solicitud]
-                                           └──▶ Queue: clientes.solicitudes.validacion
-                                                     Consumer: ms-clientes
-                                                     Valida si clienteId existe
-```
-
-**Clases a implementar en `messaging/`:**
-- `ClienteEventoConsumer` → escucha cambios de estado del cliente
-- `ClienteValidacionPublisher` → solicita validación de clienteId a ms-clientes
-
----
-
-## 🚀 Levantar solo este microservicio (desarrollo local)
+## Levantar solo este microservicio (desarrollo local)
 
 ```bash
 # Desde la raíz del monorepo
@@ -151,30 +109,21 @@ La app estará en: `http://localhost:8081/api`
 
 ---
 
-## 🧪 Ejecutar tests
-
-```bash
-cd ms-cuentas
-mvn test
-```
-
-No requiere Docker (usa H2 en memoria).
-
 ---
 
 ## 🔌 Endpoints
 
-| Método | Endpoint | Descripción | Estado |
+| Método | Endpoint | Descripción |
 |---|---|---|---|
-| GET | `/api/health` | Verificación de vida | ✅ Implementado |
-| GET | `/api/cuentas` | Listar cuentas | 🔲 Pendiente |
-| GET | `/api/cuentas/{id}` | Obtener cuenta | 🔲 Pendiente |
-| POST | `/api/cuentas` | Crear cuenta | 🔲 Pendiente |
-| PUT | `/api/cuentas/{id}` | Actualizar cuenta | 🔲 Pendiente |
-| DELETE | `/api/cuentas/{id}` | Eliminar cuenta | 🔲 Pendiente |
-| GET | `/api/movimientos` | Listar movimientos | 🔲 Pendiente |
-| POST | `/api/movimientos` | Registrar movimiento | 🔲 Pendiente |
-| GET | `/api/reportes` | Estado de cuenta por fechas | 🔲 Pendiente |
+| GET | `/api/health` | Verificación de vida |
+| GET | `/api/cuentas` | Listar cuentas | 
+| GET | `/api/cuentas/{id}` | Obtener cuenta | 
+| POST | `/api/cuentas` | Crear cuenta |
+| PUT | `/api/cuentas/{id}` | Actualizar cuenta |
+| DELETE | `/api/cuentas/{id}` | Eliminar cuenta |
+| GET | `/api/movimientos` | Listar movimientos |
+| POST | `/api/movimientos` | Registrar movimiento | 
+| GET | `/api/reportes` | Estado de cuenta por fechas |
 
 ---
 
